@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>GYLOtest - iOS Gyro Test</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --background: #0b1020;
+      --panel: #151b2f;
+      --panel2: #1f2740;
+      --text: #f5f7ff;
+      --muted: #aeb7d4;
+      --accent: #67d7ff;
+      --danger: #ff6b8a;
+      --ok: #7dffb2;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #21305d 0, var(--background) 48%, #050711 100%);
+      color: var(--text);
+      padding: calc(18px + env(safe-area-inset-top)) 18px calc(18px + env(safe-area-inset-bottom));
+    }
+
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      letter-spacing: 0.02em;
+    }
+
+    p {
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    button {
+      width: 100%;
+      appearance: none;
+      border: 0;
+      border-radius: 18px;
+      padding: 18px 20px;
+      font-size: 20px;
+      font-weight: 800;
+      color: #04111a;
+      background: linear-gradient(135deg, var(--accent), var(--ok));
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .panel {
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 22px;
+      background: rgba(21, 27, 47, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.32);
+    }
+
+    .status {
+      font-size: 15px;
+      color: var(--muted);
+      word-break: break-word;
+    }
+
+    .status strong {
+      color: var(--text);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .value {
+      padding: 14px;
+      border-radius: 16px;
+      background: var(--panel2);
+    }
+
+    .label {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .number {
+      font-variant-numeric: tabular-nums;
+      font-size: 26px;
+      font-weight: 800;
+    }
+
+    .stage {
+      position: relative;
+      height: 260px;
+      overflow: hidden;
+      border-radius: 22px;
+      background:
+        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px),
+        #11182b;
+      background-size: 28px 28px;
+      perspective: 620px;
+    }
+
+    .cube {
+      width: 110px;
+      height: 110px;
+      position: absolute;
+      left: calc(50% - 55px);
+      top: calc(50% - 55px);
+      border-radius: 22px;
+      background: linear-gradient(135deg, #67d7ff, #7dffb2);
+      box-shadow: 0 26px 55px rgba(0,0,0,0.45);
+      transform-style: preserve-3d;
+      display: grid;
+      place-items: center;
+      color: #04111a;
+      font-weight: 900;
+      font-size: 18px;
+    }
+
+    .ball {
+      width: 42px;
+      height: 42px;
+      position: absolute;
+      left: calc(50% - 21px);
+      top: calc(50% - 21px);
+      border-radius: 999px;
+      background: #fff;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.45);
+      will-change: transform;
+    }
+
+    .warning {
+      color: var(--danger);
+    }
+
+    code {
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>GYLOtest</h1>
+  <p>スマホの傾き・回転・加速度を確認するテストページです。iPhoneでは必ず下のボタンを押してセンサー利用を許可してください。</p>
+
+  <button id="startButton">センサー開始</button>
+
+  <section class="panel">
+    <div id="status" class="status"><strong>状態:</strong> 未開始</div>
+  </section>
+
+  <section class="panel stage" aria-label="傾き表示">
+    <div id="cube" class="cube">GYRO</div>
+    <div id="ball" class="ball"></div>
+  </section>
+
+  <section class="panel">
+    <h2>DeviceOrientation</h2>
+    <div class="grid">
+      <div class="value"><span class="label">alpha / 方角</span><span id="alpha" class="number">-</span></div>
+      <div class="value"><span class="label">beta / 前後</span><span id="beta" class="number">-</span></div>
+      <div class="value"><span class="label">gamma / 左右</span><span id="gamma" class="number">-</span></div>
+      <div class="value"><span class="label">absolute</span><span id="absolute" class="number">-</span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>DeviceMotion</h2>
+    <div class="grid">
+      <div class="value"><span class="label">accel X</span><span id="accelX" class="number">-</span></div>
+      <div class="value"><span class="label">accel Y</span><span id="accelY" class="number">-</span></div>
+      <div class="value"><span class="label">accel Z</span><span id="accelZ" class="number">-</span></div>
+      <div class="value"><span class="label">interval</span><span id="interval" class="number">-</span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <p>値が動かない場合は、Safariで開いているか、HTTPSのGitHub Pages URLで開いているか、iOSの「設定 → Safari → モーションと画面の向きのアクセス」が有効かを確認してください。</p>
+  </section>
+</main>
+
+<script>
+const startButton = document.getElementById("startButton");
+const statusText = document.getElementById("status");
+const cube = document.getElementById("cube");
+const ball = document.getElementById("ball");
+
+const displayTargets = {
+  alpha: document.getElementById("alpha"),
+  beta: document.getElementById("beta"),
+  gamma: document.getElementById("gamma"),
+  absolute: document.getElementById("absolute"),
+  accelX: document.getElementById("accelX"),
+  accelY: document.getElementById("accelY"),
+  accelZ: document.getElementById("accelZ"),
+  interval: document.getElementById("interval")
+};
+
+let orientationStarted = false;
+let motionStarted = false;
+
+function setStatus(message, isWarning = false) {
+  statusText.innerHTML = `<strong>状態:</strong> ${message}`;
+  statusText.classList.toggle("warning", isWarning);
+}
+
+function formatNumber(value, digits = 2) {
+  if (value === null || value === undefined || Number.isNaN(value)) return "-";
+  return Number(value).toFixed(digits);
+}
+
+async function requestIOSPermission(eventClass, eventName) {
+  if (!eventClass) return "unsupported";
+  if (typeof eventClass.requestPermission !== "function") return "not-required";
+
+  const permission = await eventClass.requestPermission();
+  if (permission !== "granted") {
+    throw new Error(`${eventName} の利用が許可されませんでした`);
+  }
+  return "granted";
+}
+
+startButton.addEventListener("click", async () => {
+  try {
+    setStatus("権限確認中...");
+
+    const orientationPermission = await requestIOSPermission(window.DeviceOrientationEvent, "DeviceOrientationEvent");
+    const motionPermission = await requestIOSPermission(window.DeviceMotionEvent, "DeviceMotionEvent");
+
+    if (window.DeviceOrientationEvent && !orientationStarted) {
+      window.addEventListener("deviceorientation", handleOrientation, true);
+      orientationStarted = true;
+    }
+
+    if (window.DeviceMotionEvent && !motionStarted) {
+      window.addEventListener("devicemotion", handleMotion, true);
+      motionStarted = true;
+    }
+
+    if (!orientationStarted && !motionStarted) {
+      setStatus("このブラウザはセンサーイベントに対応していません。", true);
+      return;
+    }
+
+    startButton.textContent = "センサー取得中";
+    setStatus(`取得開始 / Orientation: ${orientationPermission}, Motion: ${motionPermission}`);
+  } catch (error) {
+    setStatus(error.message, true);
+  }
+});
+
+function handleOrientation(event) {
+  const alpha = event.alpha;
+  const beta = event.beta;
+  const gamma = event.gamma;
+
+  displayTargets.alpha.textContent = formatNumber(alpha);
+  displayTargets.beta.textContent = formatNumber(beta);
+  displayTargets.gamma.textContent = formatNumber(gamma);
+  displayTargets.absolute.textContent = event.absolute ? "true" : "false";
+
+  const safeAlpha = alpha ?? 0;
+  const safeBeta = beta ?? 0;
+  const safeGamma = gamma ?? 0;
+
+  cube.style.transform = `rotateX(${safeBeta}deg) rotateY(${safeGamma}deg) rotateZ(${safeAlpha}deg)`;
+
+  const ballX = Math.max(-95, Math.min(95, safeGamma * 2.2));
+  const ballY = Math.max(-95, Math.min(95, safeBeta * 1.6));
+  ball.style.transform = `translate(${ballX}px, ${ballY}px)`;
+}
+
+function handleMotion(event) {
+  const acceleration = event.accelerationIncludingGravity || event.acceleration || {};
+
+  displayTargets.accelX.textContent = formatNumber(acceleration.x);
+  displayTargets.accelY.textContent = formatNumber(acceleration.y);
+  displayTargets.accelZ.textContent = formatNumber(acceleration.z);
+  displayTargets.interval.textContent = formatNumber(event.interval, 0);
+}
+</script>
+</body>
+</html>
