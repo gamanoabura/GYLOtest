@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>GYLOtest - iOS Gyro Test</title>
+  <title>GYLOtest - Camera Gyro Test</title>
   <style>
     :root {
       color-scheme: dark;
-      --background: #0b1020;
+      --background: #070b16;
       --panel: #151b2f;
       --panel2: #1f2740;
       --text: #f5f7ff;
@@ -15,6 +15,7 @@
       --accent: #67d7ff;
       --danger: #ff6b8a;
       --ok: #7dffb2;
+      --warning: #ffd36a;
     }
 
     * { box-sizing: border-box; }
@@ -23,72 +24,171 @@
       margin: 0;
       min-height: 100vh;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #21305d 0, var(--background) 48%, #050711 100%);
+      background: radial-gradient(circle at top, #21305d 0, var(--background) 48%, #03050c 100%);
       color: var(--text);
-      padding: calc(18px + env(safe-area-inset-top)) 18px calc(18px + env(safe-area-inset-bottom));
+      padding: calc(14px + env(safe-area-inset-top)) 14px calc(18px + env(safe-area-inset-bottom));
     }
 
-    main {
-      max-width: 760px;
-      margin: 0 auto;
-    }
+    main { max-width: 820px; margin: 0 auto; }
+    h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: 0.02em; }
+    h2 { margin: 0 0 12px; font-size: 20px; }
+    p { color: var(--muted); line-height: 1.65; }
 
-    h1 {
-      margin: 0 0 8px;
-      font-size: 28px;
-      letter-spacing: 0.02em;
-    }
-
-    p {
-      color: var(--muted);
-      line-height: 1.65;
-    }
-
-    button {
+    button, label.fileButton {
       width: 100%;
       appearance: none;
       border: 0;
-      border-radius: 18px;
-      padding: 18px 20px;
-      font-size: 20px;
+      border-radius: 16px;
+      padding: 15px 16px;
+      font-size: 17px;
       font-weight: 800;
       color: #04111a;
       background: linear-gradient(135deg, var(--accent), var(--ok));
-      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+      text-align: center;
+      display: block;
     }
 
-    button:active {
-      transform: translateY(1px);
+    button.secondary, label.secondary {
+      color: var(--text);
+      background: var(--panel2);
+      border: 1px solid rgba(255,255,255,0.1);
     }
+
+    button.danger {
+      color: #21020a;
+      background: linear-gradient(135deg, #ff8ba2, #ffd36a);
+    }
+
+    button:active, label.fileButton:active { transform: translateY(1px); }
+    button:disabled { opacity: .45; }
+    input[type="file"] { display: none; }
 
     .panel {
-      margin-top: 18px;
-      padding: 18px;
+      margin-top: 14px;
+      padding: 14px;
       border-radius: 22px;
-      background: rgba(21, 27, 47, 0.9);
+      background: rgba(21, 27, 47, 0.92);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.32);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.28);
     }
 
-    .status {
-      font-size: 15px;
+    .status { font-size: 14px; color: var(--muted); word-break: break-word; }
+    .status strong { color: var(--text); }
+    .warning { color: var(--danger); }
+
+    .buttonGrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .buttonGrid.single { grid-template-columns: 1fr; }
+
+    .cameraStage {
+      position: relative;
+      overflow: hidden;
+      border-radius: 22px;
+      background: #000;
+      aspect-ratio: 3 / 4;
+      max-height: 70vh;
+      min-height: 380px;
+      border: 1px solid rgba(255,255,255,.1);
+    }
+
+    video#cameraPreview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      background: #000;
+    }
+
+    .hudLayer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .reticle {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 92px;
+      height: 92px;
+      margin-left: -46px;
+      margin-top: -46px;
+      border: 3px solid rgba(103, 215, 255, .95);
+      border-radius: 999px;
+      box-shadow: 0 0 0 999px rgba(0,0,0,.04), 0 0 22px rgba(103,215,255,.8);
+      transform: translate(0, 0) rotate(0deg);
+      will-change: transform;
+    }
+
+    .reticle::before,
+    .reticle::after {
+      content: "";
+      position: absolute;
+      background: rgba(125,255,178,.95);
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .reticle::before { width: 120px; height: 3px; }
+    .reticle::after { width: 3px; height: 120px; }
+
+    .horizon {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 160%;
+      height: 4px;
+      margin-left: -80%;
+      background: rgba(255, 211, 106, .85);
+      transform-origin: center;
+      will-change: transform;
+      box-shadow: 0 0 16px rgba(255,211,106,.8);
+    }
+
+    .readout {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .readoutItem {
+      padding: 8px;
+      border-radius: 12px;
+      background: rgba(0,0,0,.48);
+      backdrop-filter: blur(10px);
+      font-size: 12px;
       color: var(--muted);
-      word-break: break-word;
     }
 
-    .status strong {
-      color: var(--text);
+    .readoutItem b {
+      display: block;
+      color: white;
+      font-size: 18px;
+      font-variant-numeric: tabular-nums;
     }
 
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-top: 14px;
+      gap: 10px;
+      margin-top: 12px;
     }
 
     .value {
-      padding: 14px;
+      padding: 12px;
       border-radius: 16px;
       background: var(--panel2);
     }
@@ -96,81 +196,78 @@
     .label {
       display: block;
       color: var(--muted);
-      font-size: 13px;
+      font-size: 12px;
       margin-bottom: 4px;
     }
 
     .number {
       font-variant-numeric: tabular-nums;
-      font-size: 26px;
+      font-size: 22px;
       font-weight: 800;
     }
 
-    .stage {
-      position: relative;
-      height: 260px;
-      overflow: hidden;
-      border-radius: 22px;
-      background:
-        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px),
-        #11182b;
-      background-size: 28px 28px;
-      perspective: 620px;
-    }
-
-    .cube {
-      width: 110px;
-      height: 110px;
-      position: absolute;
-      left: calc(50% - 55px);
-      top: calc(50% - 55px);
-      border-radius: 22px;
-      background: linear-gradient(135deg, #67d7ff, #7dffb2);
-      box-shadow: 0 26px 55px rgba(0,0,0,0.45);
-      transform-style: preserve-3d;
+    .mediaPreview {
+      margin-top: 12px;
       display: grid;
-      place-items: center;
-      color: #04111a;
-      font-weight: 900;
-      font-size: 18px;
+      gap: 10px;
     }
 
-    .ball {
-      width: 42px;
-      height: 42px;
-      position: absolute;
-      left: calc(50% - 21px);
-      top: calc(50% - 21px);
-      border-radius: 999px;
-      background: #fff;
-      box-shadow: 0 10px 24px rgba(0,0,0,0.45);
-      will-change: transform;
+    .mediaPreview img,
+    .mediaPreview video {
+      width: 100%;
+      max-height: 360px;
+      object-fit: contain;
+      border-radius: 18px;
+      background: #000;
+      border: 1px solid rgba(255,255,255,.1);
     }
 
-    .warning {
-      color: var(--danger);
-    }
+    .smallText { font-size: 13px; color: var(--muted); }
+    canvas { display: none; }
 
-    code {
-      color: var(--accent);
+    @media (max-width: 420px) {
+      .buttonGrid { grid-template-columns: 1fr; }
+      .cameraStage { min-height: 320px; }
+      .readout { grid-template-columns: 1fr 1fr 1fr; }
+      .readoutItem b { font-size: 16px; }
     }
   </style>
 </head>
 <body>
 <main>
-  <h1>GYLOtest</h1>
-  <p>スマホの傾き・回転・加速度を確認するテストページです。iPhoneでは必ず下のボタンを押してセンサー利用を許可してください。</p>
+  <h1>GYLOtest Camera</h1>
+  <p>カメラ映像の上に、ジャイロ連動の照準・水平線を重ねます。リセットボタンで現在の向きを基準位置にします。</p>
 
-  <button id="startButton">センサー開始</button>
+  <section class="panel cameraStage" aria-label="カメラとジャイロ表示">
+    <video id="cameraPreview" playsinline muted autoplay></video>
+    <div class="hudLayer">
+      <div id="horizon" class="horizon"></div>
+      <div id="reticle" class="reticle"></div>
+      <div class="readout">
+        <div class="readoutItem">左右 gamma<b id="hudGamma">-</b></div>
+        <div class="readoutItem">前後 beta<b id="hudBeta">-</b></div>
+        <div class="readoutItem">回転 alpha<b id="hudAlpha">-</b></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="buttonGrid">
+      <button id="startButton">センサー＋カメラ開始</button>
+      <button id="resetButton" class="secondary">位置リセット</button>
+      <button id="photoButton" class="secondary">写真を撮る</button>
+      <button id="recordButton" class="secondary">動画録画開始</button>
+    </div>
+    <div class="buttonGrid">
+      <label class="fileButton secondary" for="photoUpload">写真アップロード</label>
+      <label class="fileButton secondary" for="videoUpload">動画アップロード</label>
+    </div>
+    <input id="photoUpload" type="file" accept="image/*">
+    <input id="videoUpload" type="file" accept="video/*">
+  </section>
 
   <section class="panel">
     <div id="status" class="status"><strong>状態:</strong> 未開始</div>
-  </section>
-
-  <section class="panel stage" aria-label="傾き表示">
-    <div id="cube" class="cube">GYRO</div>
-    <div id="ball" class="ball"></div>
   </section>
 
   <section class="panel">
@@ -194,15 +291,31 @@
   </section>
 
   <section class="panel">
-    <p>値が動かない場合は、Safariで開いているか、HTTPSのGitHub Pages URLで開いているか、iOSの「設定 → Safari → モーションと画面の向きのアクセス」が有効かを確認してください。</p>
+    <h2>撮影・アップロードプレビュー</h2>
+    <p class="smallText">写真撮影・動画録画は端末内で生成されます。GitHub Pagesは静的サイトなので、サーバー保存ではなくローカル保存/プレビューです。</p>
+    <div id="mediaPreview" class="mediaPreview"></div>
+  </section>
+
+  <section class="panel">
+    <p>カメラが出ない場合は、Safariのカメラ許可、HTTPSのGitHub Pages URL、iOSの「設定 → Safari → モーションと画面の向きのアクセス」を確認してください。</p>
   </section>
 </main>
 
+<canvas id="captureCanvas"></canvas>
+
 <script>
 const startButton = document.getElementById("startButton");
+const resetButton = document.getElementById("resetButton");
+const photoButton = document.getElementById("photoButton");
+const recordButton = document.getElementById("recordButton");
 const statusText = document.getElementById("status");
-const cube = document.getElementById("cube");
-const ball = document.getElementById("ball");
+const cameraPreview = document.getElementById("cameraPreview");
+const reticle = document.getElementById("reticle");
+const horizon = document.getElementById("horizon");
+const captureCanvas = document.getElementById("captureCanvas");
+const mediaPreview = document.getElementById("mediaPreview");
+const photoUpload = document.getElementById("photoUpload");
+const videoUpload = document.getElementById("videoUpload");
 
 const displayTargets = {
   alpha: document.getElementById("alpha"),
@@ -212,11 +325,21 @@ const displayTargets = {
   accelX: document.getElementById("accelX"),
   accelY: document.getElementById("accelY"),
   accelZ: document.getElementById("accelZ"),
-  interval: document.getElementById("interval")
+  interval: document.getElementById("interval"),
+  hudAlpha: document.getElementById("hudAlpha"),
+  hudBeta: document.getElementById("hudBeta"),
+  hudGamma: document.getElementById("hudGamma")
 };
 
 let orientationStarted = false;
 let motionStarted = false;
+let cameraStream = null;
+let currentOrientation = { alpha: 0, beta: 0, gamma: 0 };
+let baseOrientation = { alpha: 0, beta: 0, gamma: 0 };
+let hasBaseOrientation = false;
+let mediaRecorder = null;
+let recordedChunks = [];
+let isRecording = false;
 
 function setStatus(message, isWarning = false) {
   statusText.innerHTML = `<strong>状態:</strong> ${message}`;
@@ -226,6 +349,13 @@ function setStatus(message, isWarning = false) {
 function formatNumber(value, digits = 2) {
   if (value === null || value === undefined || Number.isNaN(value)) return "-";
   return Number(value).toFixed(digits);
+}
+
+function normalizeAngleDiff(currentValue, baseValue) {
+  let diff = currentValue - baseValue;
+  while (diff > 180) diff -= 360;
+  while (diff < -180) diff += 360;
+  return diff;
 }
 
 async function requestIOSPermission(eventClass, eventName) {
@@ -239,12 +369,34 @@ async function requestIOSPermission(eventClass, eventName) {
   return "granted";
 }
 
+async function startCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    throw new Error("このブラウザはカメラAPIに対応していません");
+  }
+
+  if (cameraStream) return "already-started";
+
+  cameraStream = await navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: { ideal: "environment" },
+      width: { ideal: 1280 },
+      height: { ideal: 720 }
+    },
+    audio: true
+  });
+
+  cameraPreview.srcObject = cameraStream;
+  await cameraPreview.play();
+  return "started";
+}
+
 startButton.addEventListener("click", async () => {
   try {
     setStatus("権限確認中...");
 
     const orientationPermission = await requestIOSPermission(window.DeviceOrientationEvent, "DeviceOrientationEvent");
     const motionPermission = await requestIOSPermission(window.DeviceMotionEvent, "DeviceMotionEvent");
+    const cameraState = await startCamera();
 
     if (window.DeviceOrientationEvent && !orientationStarted) {
       window.addEventListener("deviceorientation", handleOrientation, true);
@@ -256,37 +408,175 @@ startButton.addEventListener("click", async () => {
       motionStarted = true;
     }
 
-    if (!orientationStarted && !motionStarted) {
-      setStatus("このブラウザはセンサーイベントに対応していません。", true);
-      return;
-    }
-
-    startButton.textContent = "センサー取得中";
-    setStatus(`取得開始 / Orientation: ${orientationPermission}, Motion: ${motionPermission}`);
+    startButton.textContent = "取得中";
+    setStatus(`開始 / Camera: ${cameraState}, Orientation: ${orientationPermission}, Motion: ${motionPermission}`);
   } catch (error) {
     setStatus(error.message, true);
   }
 });
 
-function handleOrientation(event) {
-  const alpha = event.alpha;
-  const beta = event.beta;
-  const gamma = event.gamma;
+resetButton.addEventListener("click", () => {
+  baseOrientation = { ...currentOrientation };
+  hasBaseOrientation = true;
+  setStatus(`現在の向きを基準にしました / alpha ${formatNumber(baseOrientation.alpha)}, beta ${formatNumber(baseOrientation.beta)}, gamma ${formatNumber(baseOrientation.gamma)}`);
+  updateOverlay();
+});
 
-  displayTargets.alpha.textContent = formatNumber(alpha);
-  displayTargets.beta.textContent = formatNumber(beta);
-  displayTargets.gamma.textContent = formatNumber(gamma);
+photoButton.addEventListener("click", () => {
+  if (!cameraStream || cameraPreview.videoWidth === 0) {
+    setStatus("先にカメラを開始してください", true);
+    return;
+  }
+
+  captureCanvas.width = cameraPreview.videoWidth;
+  captureCanvas.height = cameraPreview.videoHeight;
+  const context = captureCanvas.getContext("2d");
+  context.drawImage(cameraPreview, 0, 0, captureCanvas.width, captureCanvas.height);
+
+  captureCanvas.toBlob((blob) => {
+    if (!blob) return;
+    const objectUrl = URL.createObjectURL(blob);
+    const fileName = `gylotest-photo-${Date.now()}.jpg`;
+    showImagePreview(objectUrl, fileName, true);
+    setStatus("写真を作成しました。プレビュー下のリンクから保存できます。");
+  }, "image/jpeg", 0.92);
+});
+
+recordButton.addEventListener("click", () => {
+  if (!cameraStream) {
+    setStatus("先にカメラを開始してください", true);
+    return;
+  }
+
+  if (isRecording) {
+    mediaRecorder.stop();
+    return;
+  }
+
+  recordedChunks = [];
+  const preferredTypes = [
+    "video/mp4;codecs=h264",
+    "video/mp4",
+    "video/webm;codecs=vp9",
+    "video/webm"
+  ];
+  const mimeType = preferredTypes.find(type => window.MediaRecorder && MediaRecorder.isTypeSupported(type)) || "";
+
+  try {
+    mediaRecorder = new MediaRecorder(cameraStream, mimeType ? { mimeType } : undefined);
+  } catch (error) {
+    setStatus(`録画を開始できません: ${error.message}`, true);
+    return;
+  }
+
+  mediaRecorder.addEventListener("dataavailable", event => {
+    if (event.data && event.data.size > 0) recordedChunks.push(event.data);
+  });
+
+  mediaRecorder.addEventListener("stop", () => {
+    const blobType = mediaRecorder.mimeType || "video/mp4";
+    const blob = new Blob(recordedChunks, { type: blobType });
+    const objectUrl = URL.createObjectURL(blob);
+    const extension = blobType.includes("webm") ? "webm" : "mp4";
+    const fileName = `gylotest-video-${Date.now()}.${extension}`;
+    showVideoPreview(objectUrl, fileName, true);
+    isRecording = false;
+    recordButton.textContent = "動画録画開始";
+    recordButton.classList.remove("danger");
+    recordButton.classList.add("secondary");
+    setStatus("録画を停止しました。プレビュー下のリンクから保存できます。");
+  });
+
+  mediaRecorder.start();
+  isRecording = true;
+  recordButton.textContent = "録画停止";
+  recordButton.classList.remove("secondary");
+  recordButton.classList.add("danger");
+  setStatus("録画中...");
+});
+
+photoUpload.addEventListener("change", event => {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const objectUrl = URL.createObjectURL(file);
+  showImagePreview(objectUrl, file.name, false);
+  setStatus(`写真を読み込みました: ${file.name}`);
+});
+
+videoUpload.addEventListener("change", event => {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const objectUrl = URL.createObjectURL(file);
+  showVideoPreview(objectUrl, file.name, false);
+  setStatus(`動画を読み込みました: ${file.name}`);
+});
+
+function showImagePreview(objectUrl, fileName, downloadable) {
+  mediaPreview.innerHTML = "";
+  const image = document.createElement("img");
+  image.src = objectUrl;
+  image.alt = fileName;
+  mediaPreview.appendChild(image);
+  if (downloadable) addDownloadLink(objectUrl, fileName);
+}
+
+function showVideoPreview(objectUrl, fileName, downloadable) {
+  mediaPreview.innerHTML = "";
+  const video = document.createElement("video");
+  video.src = objectUrl;
+  video.controls = true;
+  video.playsInline = true;
+  mediaPreview.appendChild(video);
+  if (downloadable) addDownloadLink(objectUrl, fileName);
+}
+
+function addDownloadLink(objectUrl, fileName) {
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = fileName;
+  link.textContent = `保存: ${fileName}`;
+  link.style.color = "var(--accent)";
+  link.style.fontWeight = "800";
+  link.style.wordBreak = "break-all";
+  mediaPreview.appendChild(link);
+}
+
+function handleOrientation(event) {
+  currentOrientation = {
+    alpha: event.alpha ?? 0,
+    beta: event.beta ?? 0,
+    gamma: event.gamma ?? 0
+  };
+
+  displayTargets.alpha.textContent = formatNumber(event.alpha);
+  displayTargets.beta.textContent = formatNumber(event.beta);
+  displayTargets.gamma.textContent = formatNumber(event.gamma);
   displayTargets.absolute.textContent = event.absolute ? "true" : "false";
 
-  const safeAlpha = alpha ?? 0;
-  const safeBeta = beta ?? 0;
-  const safeGamma = gamma ?? 0;
+  if (!hasBaseOrientation) {
+    baseOrientation = { ...currentOrientation };
+    hasBaseOrientation = true;
+  }
 
-  cube.style.transform = `rotateX(${safeBeta}deg) rotateY(${safeGamma}deg) rotateZ(${safeAlpha}deg)`;
+  updateOverlay();
+}
 
-  const ballX = Math.max(-95, Math.min(95, safeGamma * 2.2));
-  const ballY = Math.max(-95, Math.min(95, safeBeta * 1.6));
-  ball.style.transform = `translate(${ballX}px, ${ballY}px)`;
+function updateOverlay() {
+  const diffAlpha = normalizeAngleDiff(currentOrientation.alpha, baseOrientation.alpha);
+  const diffBeta = currentOrientation.beta - baseOrientation.beta;
+  const diffGamma = currentOrientation.gamma - baseOrientation.gamma;
+
+  const reticleX = Math.max(-150, Math.min(150, diffGamma * 4));
+  const reticleY = Math.max(-150, Math.min(150, diffBeta * 3));
+  const reticleRotate = diffAlpha;
+  const horizonY = Math.max(-220, Math.min(220, diffBeta * 4));
+
+  reticle.style.transform = `translate(${reticleX}px, ${reticleY}px) rotate(${reticleRotate}deg)`;
+  horizon.style.transform = `translateY(${horizonY}px) rotate(${diffGamma * -1.2}deg)`;
+
+  displayTargets.hudAlpha.textContent = formatNumber(diffAlpha, 1);
+  displayTargets.hudBeta.textContent = formatNumber(diffBeta, 1);
+  displayTargets.hudGamma.textContent = formatNumber(diffGamma, 1);
 }
 
 function handleMotion(event) {
